@@ -5,43 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Quote Lookup</title>
   <style>
-    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .card { max-width: 400px; border: 1px solid #ccc; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    input { width: 100%; padding: 8px; margin-top: 10px; }
-    button { width: 100%; padding: 10px; background-color: black; color: white; margin-top: 20px; }
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f9f9f9; }
+    .card { background: white; max-width: 400px; border: 1px solid #ccc; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+    input { width: 100%; padding: 8px; margin-top: 10px; font-size: 16px; }
+    button { width: 100%; padding: 10px; background-color: black; color: white; margin-top: 20px; border: none; font-size: 16px; cursor: pointer; }
+    .hidden { display: none; }
+    .error { color: red; margin-top: 10px; }
+    .field { margin: 8px 0; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>Quote Lookup</h2>
-    <input id="quoteId" type="text" placeholder="Quote ID" />
-    <input id="email" type="email" placeholder="Email" />
-    <button onclick="lookupQuote()">Proceed</button>
-    <div id="result" style="margin-top:20px;"></div>
+    <div id="lookupSection">
+      <input id="quoteId" type="text" placeholder="Enter your Quote ID" />
+      <button onclick="lookupQuote()">Proceed</button>
+      <div id="error" class="error"></div>
+    </div>
+
+    <div id="confirmSection" class="hidden">
+      <div class="field"><strong>Email:</strong> <span id="confirmEmail"></span></div>
+      <div class="field"><strong>Total:</strong> $<span id="confirmTotal"></span></div>
+      <p>If this is correct, please click Proceed.</p>
+      <button onclick="finalProceed()">Proceed</button>
+    </div>
   </div>
 
   <script>
     async function lookupQuote() {
-      const quoteId = document.getElementById("quoteId").value;
-      const email = document.getElementById("email").value;
-      const result = document.getElementById("result");
+      const quoteId = document.getElementById("quoteId").value.trim();
+      const error = document.getElementById("error");
 
-      const res = await fetch('https://script.google.com/macros/s/AKfycbwk5Ev2kXs4s6GsHWxJlkJuKisrDHG_IIZdUr_JH0yesY5F3_1oD2_YoSoQIv9_aHkrTA/exec', {
-        method: 'POST',
-        body: new URLSearchParams({ quoteId, email })
-      });
-      
-      const data = await res.json();
+      error.textContent = "";
 
-      if (data.success) {
-        result.innerHTML = `
-          <p><strong>Quote ID:</strong> ${data.quoteId}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Total:</strong> $${data.total}</p>
-        `;
-      } else {
-        result.innerHTML = "<p style='color:red;'>Quote not found or email does not match.</p>";
+      if (!quoteId) {
+        error.textContent = "Please enter a Quote ID.";
+        return;
       }
+
+      try {
+        const res = await fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+          method: 'POST',
+          body: new URLSearchParams({ quoteId })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById("lookupSection").classList.add("hidden");
+          document.getElementById("confirmSection").classList.remove("hidden");
+          document.getElementById("confirmEmail").textContent = data.email;
+          document.getElementById("confirmTotal").textContent = data.total;
+        } else {
+          error.textContent = "Quote not found.";
+        }
+
+      } catch (err) {
+        error.textContent = "Something went wrong. Please try again.";
+      }
+    }
+
+    function finalProceed() {
+      alert("Proceeding... (this will trigger Zapier soon)");
+      // Later, this will POST to your Zapier webhook URL
     }
   </script>
 </body>
